@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block content %}
+        <section class="hero" id="scan">
+            <div class="hero-copy">
+                <p class="eyebrow">Cybersecurity tool</p>
+                <h1>Scan before <span class="accent">you trust.</span></h1>
+                <p class="lede">
+                    Upload a QR code and QRShield reads the link hidden inside it,
+                    then checks that link for common warning signs before you open it.
+                </p>
+
+                <div class="badge-row">
+                    <span class="pill pill-green">Offline analysis</span>
+                    <span class="pill pill-cyan">Nothing stored publicly</span>
+                    <span class="pill pill-magenta">Instant results</span>
+                </div>
+            </div>
+
+            <div class="upload-card">
+                <div class="card-header">
+                    <div>
+                        <p class="small-label">QR analyzer</p>
+                        <h2>Upload a QR code</h2>
+                    </div>
+                    <div class="status-dot"></div>
+                </div>
+
+                <form method="POST" enctype="multipart/form-data" id="scanForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
+                    <label class="drop-zone" id="dropZone">
+                        <input type="file" name="qr_image" id="qrImage"
+                               accept=".png,.jpg,.jpeg,.webp,image/*" required>
+                        <div class="upload-icon">⬆</div>
+                        <h3>Drop your QR image here</h3>
+                        <p>or <span class="accent">browse from your device</span></p>
+                        <small>PNG, JPG, JPEG or WEBP · max 5MB</small>
+                    </label>
+
+                    <div class="preview" id="preview"></div>
+
+                    <button class="scan-button" type="submit" id="scanButton">
+                        <span>Scan & Analyze</span>
+                        <span class="arrow">→</span>
+                    </button>
+                </form>
+
+                <p class="privacy-note">
+                    {% if current_user.is_authenticated %}
+                        Signed in as {{ current_user.username }} — this scan will be saved to your history.
+                    {% else %}
+                        <a class="accent" href="{{ url_for('login') }}">Log in</a> to save scans to a personal history.
+                    {% endif %}
+                </p>
+            </div>
+        </section>
+
+        {% if error %}
+        <section class="result-section">
+            <div class="alert-card">
+                <span class="alert-icon">!</span>
+                <div>
+                    <strong>We couldn't complete that scan</strong>
+                    <p>{{ error }}</p>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if result %}
+        <section class="result-section" id="result">
+            <div class="result-top">
+                <div>
+                    <p class="eyebrow">Analysis complete</p>
+                    <h2>URL risk report</h2>
+                </div>
+                <a class="secondary-button" href="/">Scan another</a>
+            </div>
+
+            <div class="result-grid">
+                <div class="risk-card {{ result.css_class }}">
+                    <p class="risk-label">Risk score</p>
+                    <div class="score-ring-wrap">
+                        <svg class="score-ring" viewBox="0 0 140 140">
+                            <circle class="ring-track" cx="70" cy="70" r="60"></circle>
+                            <circle class="ring-fill" cx="70" cy="70" r="60" data-score="{{ result.score }}"></circle>
+                        </svg>
+                        <div class="score-value" data-target="{{ result.score }}">0</div>
+                    </div>
+                    <div class="out-of">out of 100</div>
+                    <div class="risk-badge">{{ result.level }}</div>
+                </div>
+
+                <div class="details-card">
+                    <p class="small-label">Detected link</p>
+                    <div class="url-box">
+                        <span>{{ result.url }}</span>
+                    </div>
+
+                    <div class="stats">
+                        <div>
+                            <span>Protocol</span>
+                            <strong>{{ result.protocol }}</strong>
+                        </div>
+                        <div>
+                            <span>Domain</span>
+                            <strong>{{ result.hostname }}</strong>
+                        </div>
+                        <div>
+                            <span>Link length</span>
+                            <strong>{{ result.length }} chars</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="checks-card">
+                <p class="small-label">Security checks</p>
+                <h3>What we found</h3>
+
+                <div class="checks-grid">
+                    {% for check in result.checks %}
+                    <div class="check-item {{ 'pass' if check.status == 'pass' else 'warn' }}">
+                        <span class="check-icon">{{ '✓' if check.status == 'pass' else '!' }}</span>
+                        <p>{{ check.text }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="recommendation {{ result.css_class }}">
+                <div class="recommendation-icon">i</div>
+                <div>
+                    <p class="small-label">Recommendation</p>
+                    <p>{{ result.recommendation }}</p>
+                </div>
+            </div>
+
+            <form class="feedback-card" method="POST" action="{{ url_for('submit_feedback', scan_id=result.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div>
+                    <p class="small-label">Think this is wrong?</p>
+                    <p class="feedback-hint">Report it as a false positive and we'll log it for review.</p>
+                </div>
+                <div class="feedback-row">
+                    <input type="text" name="comment" placeholder="Optional note, e.g. this domain is mine">
+                    <button type="submit" class="secondary-button">Report false positive</button>
+                </div>
+            </form>
+
+            <p class="disclaimer">
+                QRShield uses rule-based URL analysis. A low score does not guarantee
+                that a website is completely safe or free from malware.
+            </p>
+        </section>
+        {% endif %}
+
+        <section class="how-section" id="how">
+            <div class="section-heading">
+                <p class="eyebrow">How it works</p>
+                <h2>Three simple steps to a safer scan.</h2>
+            </div>
+
+            <div class="steps-grid">
+                <div class="step step-green">
+                    <span class="step-number">1</span>
+                    <h3>Scan</h3>
+                    <p>Upload a QR code image. QRShield decodes it and reads the link hidden inside — no app or camera needed.</p>
+                </div>
+                <div class="step step-cyan">
+                    <span class="step-number">2</span>
+                    <h3>Analyze</h3>
+                    <p>The link is checked against eleven common phishing patterns: fake domains, disguised characters, shortened links, and more.</p>
+                </div>
+                <div class="step step-magenta">
+                    <span class="step-number">3</span>
+                    <h3>Understand</h3>
+                    <p>You get a plain risk score, exactly which checks passed or failed, and a clear recommendation on whether to proceed.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="security-section" id="security">
+            <div class="security-card">
+                <div>
+                    <p class="eyebrow">Built for awareness</p>
+                    <h2>Don't let a QR code hide the destination.</h2>
+                    <p>
+                        QR codes make links convenient, but they can also hide
+                        suspicious destinations. QRShield lets you check the link
+                        first, entirely offline, before you ever open it.
+                    </p>
+                </div>
+                <img class="security-mark" src="{{ url_for('static', filename='img/logo.svg') }}" alt="QRShield logo">
+            </div>
+        </section>
+{% endblock %}
