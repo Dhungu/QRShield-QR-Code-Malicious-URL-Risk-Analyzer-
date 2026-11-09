@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Scan history | QRShield{% endblock %}
+
+{% block content %}
+        <section class="result-section">
+            <div class="result-top">
+                <div>
+                    <p class="eyebrow">Your account</p>
+                    <h2>Scan history</h2>
+                </div>
+                <a class="secondary-button" href="{{ url_for('index') }}#scan">New scan</a>
+            </div>
+
+            {% if scans %}
+            <div class="history-list">
+                {% for scan in scans %}
+                <div class="history-item">
+                    <div class="history-badge {{ scan.risk_level|lower|replace(' risk', '') }}">
+                        <span class="history-score">{{ scan.risk_score }}</span>
+                        <span class="history-out-of">/100</span>
+                    </div>
+                    <div class="history-body">
+                        <p class="history-url">{{ scan.extracted_url }}</p>
+                        <p class="history-meta">
+                            {{ scan.hostname }} · {{ scan.protocol }} · {{ scan.risk_level }}
+                            · {{ scan.timestamp.strftime('%d %b %Y, %I:%M %p') }}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="details-card">
+                <p class="small-label">Nothing here yet</p>
+                <p>Scans you run while logged in will show up here.</p>
+            </div>
+            {% endif %}
+        </section>
+{% endblock %}

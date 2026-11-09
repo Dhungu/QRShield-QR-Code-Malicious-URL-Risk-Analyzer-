@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Sign up | QRShield{% endblock %}
+
+{% block content %}
+        <section class="auth-section">
+            <div class="auth-card">
+                <p class="eyebrow">Get started</p>
+                <h2>Create your account</h2>
+                <p class="auth-lede">Save every scan you run so you can look back at what you've checked.</p>
+
+                <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <label class="field">
+                        <span>Username</span>
+                        <input type="text" name="username" autocomplete="username" required>
+                    </label>
+
+                    <label class="field">
+                        <span>Email</span>
+                        <input type="email" name="email" autocomplete="email" required>
+                    </label>
+
+                    <label class="field">
+                        <span>Password</span>
+                        <input type="password" name="password" autocomplete="new-password" minlength="8" required>
+                    </label>
+
+                    <label class="field">
+                        <span>Confirm password</span>
+                        <input type="password" name="confirm_password" autocomplete="new-password" minlength="8" required>
+                    </label>
+
+                    <button class="scan-button" type="submit">
+                        <span>Create account</span>
+                        <span class="arrow">→</span>
+                    </button>
+                </form>
+
+                <p class="auth-switch">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+            </div>
+        </section>
+{% endblock %}
